@@ -53,7 +53,7 @@ def preprocess(path, scale=3):
   # Must be normalized
   image = (image-127.5 )/ 127.5 
   label_ = (image-127.5 )/ 127.5 
-  #下采样之后再插�?  input_ = scipy.ndimage.interpolation.zoom(label_, (1./scale), prefilter=False)
+  #下采样之后再插�?  input_ = scipy.ndimage.interpolation.zoom(label_, (1./scale), prefilter=False)
   input_ = scipy.ndimage.interpolation.zoom(input_, (scale/1.), prefilter=False)
 
   return input_, label_
@@ -105,7 +105,7 @@ def imread(path, is_grayscale=True):
   Default value is gray-scale, and image is read by YCbCr format as the paper said.
   """
   if is_grayscale:
-    #flatten=True 以灰度图的形式读�?
+    #flatten=True 以灰度图的形式读�?
     return scipy.misc.imread(path, flatten=True, mode='YCbCr').astype(np.float)
   else:
     return scipy.misc.imread(path, mode='YCbCr').astype(np.float)
@@ -155,11 +155,11 @@ def input_setup(sess,config,data_dir,index=0):
         h, w, _ = input_.shape
       else:
         h, w = input_.shape
-      #�?4步长采样小patch
+      #�?4步长采样小patch
       for x in range(0, h-config.image_size+1, config.stride):
         for y in range(0, w-config.image_size+1, config.stride):
           sub_input = input_[x:x+config.image_size, y:y+config.image_size] # [33 x 33]
-          #注意这里的padding，前向传播时由于卷积是没有padding的，所以实际上预测的是测试patch的中间部�?          
+          #注意这里的padding，前向传播时由于卷积是没有padding的，所以实际上预测的是测试patch的中间部�?          
           sub_label = label_[x+padding:x+padding+config.label_size, y+padding:y+padding+config.label_size] # [21 x 21]
           # Make channel value
           if data_dir == "Train":

@@ -11,7 +11,7 @@ import os
 import time
 import pandas as pd
 from openpyxl import load_workbook
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # True for training phase
 IS_TRAINING = False

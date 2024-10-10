@@ -16,7 +16,7 @@ from natsort import natsorted
 from skimage.color import rgb2ycbcr, ycbcr2rgb
 import argparse
 from tqdm import tqdm
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
 
 ############ 常量的预定义 ############
 E = tf.constant(0.6, dtype=tf.float32)

@@ -5,88 +5,88 @@ import tensorflow as tf
 import time
 import cv2
 
-# VGG 自带的一个常量，之前VGG训练通过归一化，所以现在同样需要作此操作
-VGG_MEAN = [103.939, 116.779, 123.68]  # rgb 三通道的均值
+# VGG에서 제공하는 상수, 이전 VGG 훈련을 통해 정규화되었으므로 지금도 동일한 작업이 필요합니다.
+VGG_MEAN = [103.939, 116.779, 123.68]  # rgb 세 채널의 평균값
 
 
 class VGGNet():
     '''
-    创建 vgg16 网络 结构
-    从模型中载入参数
+    vgg16 네트워크 구조 생성
+    모델에서 매개변수 로드
     '''
 
     def __init__(self, data_dict):
         '''
-        传入vgg16模型
-        :param data_dict: vgg16.npy (字典类型)
+        vgg16 모델 전달
+        :param data_dict: vgg16.npy (딕셔너리 타입)
         '''
         self.data_dict = data_dict
 
     def get_conv_filter(self, name):
         '''
-        得到对应名称的卷积层
-        :param name: 卷积层名称
-        :return: 该卷积层输出
+        해당 이름의 컨볼루션 레이어 얻기
+        :param name: 컨볼루션 레이어 이름
+        :return: 해당 컨볼루션 레이어 출력
         '''
         return tf.constant(self.data_dict[name][0], name='conv')
 
     def get_fc_weight(self, name):
         '''
-        获得名字为name的全连接层权重
-        :param name: 连接层名称
-        :return: 该层权重
+        이름이 name인 완전 연결 레이어의 가중치 얻기
+        :param name: 연결 레이어 이름
+        :return: 해당 레이어 가중치
         '''
         return tf.constant(self.data_dict[name][0], name='fc')
 
     def get_bias(self, name):
         '''
-        获得名字为name的全连接层偏置
-        :param name: 连接层名称
-        :return: 该层偏置
+        이름이 name인 완전 연결 레이어의 편향 얻기
+        :param name: 연결 레이어 이름
+        :return: 해당 레이어 편향
         '''
         return tf.constant(self.data_dict[name][1], name='bias')
 
     def conv_layer(self, x, name):
         '''
-        创建一个卷积层
+        컨볼루션 레이어 생성
         :param x:
         :param name:
         :return:
         '''
-        # 在写计算图模型的时候，加一些必要的 name_scope，这是一个比较好的编程规范
-        # 可以防止命名冲突， 二可视化计算图的时候比较清楚
+        # 계산 그래프 모델을 작성할 때, 일부 필요한 name_scope를 추가하는 것이 좋은 코딩 규칙입니다.
+        # 이는 이름 충돌을 방지하고, 계산 그래프를 시각화할 때 더 명확하게 합니다.
         with tf.name_scope(name):
-            # 获得 w 和 b
+            # w와 b 얻기
             conv_w = self.get_conv_filter(name)
             conv_b = self.get_bias(name)
 
-            # 进行卷积计算
+            # 컨볼루션 계산 수행
             h = tf.nn.conv2d(x, conv_w, strides=[1, 1, 1, 1], padding='SAME')
             '''
-            因为此刻的 w 和 b 是从外部传递进来，所以使用 tf.nn.conv2d()
-            tf.nn.conv2d(input, filter, strides, padding, use_cudnn_on_gpu = None, name = None) 参数说明：
-            input 输入的tensor， 格式[batch, height, width, channel]
-            filter 卷积核 [filter_height, filter_width, in_channels, out_channels] 
-                分别是：卷积核高，卷积核宽，输入通道数，输出通道数
-            strides 步长 卷积时在图像每一维度的步长，长度为4
-            padding 参数可选择 “SAME” “VALID”
+            현재 w와 b는 외부에서 전달되므로 tf.nn.conv2d()를 사용합니다.
+            tf.nn.conv2d(input, filter, strides, padding, use_cudnn_on_gpu = None, name = None) 매개변수 설명:
+            input 입력 텐서, 형식 [batch, height, width, channel]
+            filter 컨볼루션 커널 [filter_height, filter_width, in_channels, out_channels] 
+                각각: 컨볼루션 커널 높이, 컨볼루션 커널 너비, 입력 채널 수, 출력 채널 수
+            strides 스트라이드, 컨볼루션 시 이미지의 각 차원에서의 스트라이드, 길이 4
+            padding 매개변수는 "SAME" 또는 "VALID"를 선택할 수 있습니다.
 
             '''
-            # 加上偏置
+            # 편향 추가
             h = tf.nn.bias_add(h, conv_b)
-            # 使用激活函数
+            # 활성화 함수 사용
             h = tf.nn.relu(h)
             return h
 
     def pooling_layer(self, x, name):
         '''
-        创建池化层
-        :param x: 输入的tensor
-        :param name: 池化层名称
-        :return: tensor
+        풀링 레이어 생성
+        :param x: 입력 텐서
+        :param name: 풀링 레이어 이름
+        :return: 텐서
         '''
         return tf.nn.max_pool(x,
-                              ksize=[1, 2, 2, 1],  # 核参数， 注意：都是4维
+                              ksize=[1, 2, 2, 1],  # 커널 매개변수, 주의: 모두 4차원
                               strides=[1, 2, 2, 1],
                               padding='SAME',
                               name=name
@@ -94,21 +94,21 @@ class VGGNet():
 
     def fc_layer(self, x, name, activation=tf.nn.relu):
         '''
-        创建全连接层
-        :param x: 输入tensor
-        :param name: 全连接层名称
-        :param activation: 激活函数名称
-        :return: 输出tensor
+        완전 연결 레이어 생성
+        :param x: 입력 텐서
+        :param name: 완전 연결 레이어 이름
+        :param activation: 활성화 함수 이름
+        :return: 출력 텐서
         '''
         with tf.name_scope(name, activation):
-            # 获取全连接层的 w 和 b
+            # 완전 연결 레이어의 w와 b 얻기
             fc_w = self.get_fc_weight(name)
             fc_b = self.get_bias(name)
-            # 矩阵相乘 计算
+            # 행렬 곱셈 계산
             h = tf.matmul(x, fc_w)
-            # 　添加偏置
+            # 편향 추가
             h = tf.nn.bias_add(h, fc_b)
-            # 因为最后一层是没有激活函数relu的，所以在此要做出判断
+            # 마지막 레이어에는 활성화 함수 relu가 없으므로 여기서 판단해야 합니다.
             if activation is None:
                 return h
             else:
@@ -116,25 +116,25 @@ class VGGNet():
 
     def flatten_layer(self, x, name):
         '''
-        展平
+        평탄화
         :param x: input_tensor
         :param name:
-        :return: 二维矩阵
+        :return: 2차원 행렬
         '''
         with tf.name_scope(name):
             # [batch_size, image_width, image_height, channel]
             x_shape = x.get_shape().as_list()
-            # 计算后三维合并后的大小
+            # 마지막 세 차원을 합친 크기 계산
             dim = 1
             for d in x_shape[1:]:
                 dim *= d
-            # 形成一个二维矩阵
+            # 2차원 행렬 형성
             x = tf.reshape(x, [-1, dim])
             return x
 
     def build(self, x_rgb):
         '''
-        创建vgg16 网络
+        vgg16 네트워크 생성
         :param x_rgb: [1, 224, 224, 3]
         :return:
         '''

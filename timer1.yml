@@ -1,0 +1,23 @@
+name: timer
+channels:
+  - defaults
+  - conda-forge
+  - pytorch
+  - nvidia
+dependencies:
+  - numpy  # NumPy
+  - matplotlib  # Matplotlib
+  - scikit-learn  # Scikit-learn
+  - jupyter  # Jupyter Notebook
+  - pandas  # Pandas
+  - pip
+  - opencv  # OpenCV
+  - requests  # Requests library
+  - tqdm  # TQDM
+  - ipykernel
+  # - tensorflow=1.15  # TensorFlow 1.15
+  # - tensorflow-gpu=1.15  # TensorFlow 1.15 GPU
+  # - pytorch  # PyTorch (CUDA 10.0)
+  # - torchvision
+  # - torchaudio
+  # - cudatoolkit=11  # TensorFlow 1.15 및 PyTorch의 호환 버전

@@ -6,7 +6,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import time
 from datetime import datetime
-# from scipy.misc import imsave
+# from imageio import imsave
 import scipy.ndimage
 from skimage import img_as_ubyte
 import os

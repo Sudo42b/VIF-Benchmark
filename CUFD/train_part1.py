@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import time
-from scipy.misc import imsave
+from imageio import imsave
 import scipy.ndimage
 from scipy.misc import imread
 

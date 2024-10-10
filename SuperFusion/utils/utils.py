@@ -51,7 +51,7 @@ def randflow(img,angle=7,trans=0.07,ratio=1,sigma=15,base=500):
 # a = {'a':1,'b':1}
 # for i in a.keys():
 #     print(i)
-
+"""
 img = Image.open("/data1/timer/JAS/datasets/VIS_IR/ir/0.png")
 img = TF.to_tensor(img).unsqueeze(0)
 
@@ -78,7 +78,7 @@ img_crop = img[:,:,h//2-crop_size+shift:h//2+crop_size+shift,w//2-crop_size+shif
 flow_crop = KU.create_meshgrid(crop_size*2,crop_size*2).to(img.device)+disp_crop
 img_warped1 = F.grid_sample(img_crop,flow_crop)#trans(img_crop.cuda(),disp_crop.cuda())
 #img_rewarped = F.grid_sample(img_warped,Invertdisp(disp,flow)[1],mode='bilinear',align_corners=False)
-
+"""
 # 
 # idisp = Invertdisp(disp,flow)
 # flow[:,:,:,0] = (flow[:,:,:,0]+1)/2*w

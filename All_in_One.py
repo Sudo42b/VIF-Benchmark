@@ -1,10 +1,26 @@
 import os
 from tqdm import tqdm 
 import sys
+import argparse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
-ir_dir = os.path.join(os.getcwd(), 'datasets/test_imgs/ir')
-vi_dir = os.path.join(os.getcwd(), 'datasets/test_imgs/vi')
+argparser = argparse.ArgumentParser()
+argparser.add_argument('--path', type=str, default='Dataset')
+argparser.add_argument('--save', type=str, default='Results')
+
+args = argparser.parse_args()
+save_dir = os.path.join(args.save)
+os.makedirs(save_dir, exist_ok=True)
+ir_dir = os.path.join(args.path, 'ir')
+vi_dir = os.path.join(args.path, 'vi')
+if not os.path.exists(ir_dir):
+    print('Please download the dataset first!')
+    print(ir_dir + ' does not exist!')
+    sys.exit(0)
+if not os.path.exists(vi_dir):
+    print('Please download the dataset first!')
+    print(vi_dir + ' does not exist!')
+    sys.exit(0)
 
 model_path_dict = dict()
 model_path_dict_1 = dict()
@@ -62,24 +78,25 @@ Method_list = ['CSF', 'CUFD', 'DIDFuse', 'DIVFusion', 'DenseFuse',
                'PIAFusion', 'PMGI', 'RFN-Nest', 'SDNet', 'STDFusionNet', 
                'SeAFusion', 'SuperFusion', 'SwinFusion', 'TarDAL', 'U2Fusion', 
                'UMF-CMGR']
+
 print(len(Method_list))
 two_model_list =['CSF', 'CUFD', 'DIDFuse', 'DIVFusion', 'RFN-Nest'] 
 
-for Method in Method_list:    
-    save_dir = os.path.join(os.getcwd(), 'Results/', Method)
+for Method in tqdm(Method_list):
+    save_dir = os.path.join(save_dir, Method)
     if Method not in two_model_list:
         with open('script.sh', 'w') as f:
             f.write('#!/bin/bash\n')
             f.write("cd {}\n".format(Method))
             print(Method.replace('-', ''))
-            f.write("CUDA_VISIBLE_DEVICES=0 \
-                    python {}.py \
-                    --Method {} \
-                    --model_path {} \
-                    --ir_dir {}\
-                    --vi_dir {} \
-                    --save_dir {} \
-                    --is_RGB {}\n".format(Method.replace('-', ''), Method, model_path_dict[Method], ir_dir, vi_dir, save_dir, True))
+            f.write(f"CUDA_VISIBLE_DEVICES=0 \
+                    python {Method.replace('-', '')}.py \
+                    --Method {Method} \
+                    --model_path {model_path_dict[Method]} \
+                    --ir_dir {ir_dir}\
+                    --vi_dir {vi_dir} \
+                    --save_dir {save_dir} \
+                    --is_RGB {True}\n")
             f.write("cd ..\n".format(Method))
         os.system('bash script.sh')
         # os.system('bash script.sh')
@@ -88,14 +105,14 @@ for Method in Method_list:
             f.write('#!/bin/bash\n')
             f.write("cd {}\n".format(Method))
             print(Method.replace('-', ''))
-            f.write("CUDA_VISIBLE_DEVICES=0 \
-                    python {}.py \
-                    --Method {} \
-                    --model_path_1 {} \
-                    --model_path_2 {} \
-                    --ir_dir {}\
-                    --vi_dir {} \
-                    --save_dir {} \
-                    --is_RGB {}\n".format(Method.replace('-', ''), Method, model_path_dict_1[Method], model_path_dict_2[Method], ir_dir, vi_dir, save_dir, True))
+            f.write(f"CUDA_VISIBLE_DEVICES=0 \
+                    python {Method.replace('-', '')}.py \
+                    --Method {Method} \
+                    --model_path_1 {model_path_dict_1[Method]} \
+                    --model_path_2 {model_path_dict_2[Method]} \
+                    --ir_dir {ir_dir}\
+                    --vi_dir {vi_dir} \
+                    --save_dir {save_dir} \
+                    --is_RGB {True}\n")
             f.write("cd ..\n".format(Method))
         os.system('bash script.sh')

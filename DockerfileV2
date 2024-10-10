@@ -1,0 +1,140 @@
+#Reference https://gist.github.com/GzuPark/b89344cb93320e395ec357bc711a8799#file-tf-dockerfile
+#https://velog.io/@kijh30123/Tensorflow-version-1.15.5in-colab-%EC%BD%94%EB%9E%A9%EC%97%90%EC%84%9C-%ED%85%90%EC%84%9C%ED%94%8C%EB%A1%9C-%EB%B2%84%EC%A0%84-%EB%82%AE%EC%B6%94%EA%B8%B0
+######### 1. NGC의 Tensorflow 공식 이미지
+ARG BASE_IMAGE=nvcr.io/nvidia/tensorflow:20.12-tf1-py3
+FROM $BASE_IMAGE
+
+ARG CUDA_VERSION=11.3.1
+ARG CUDA=11.3
+ARG CUDNN_VERSION=8
+ARG UID=
+ARG USER_NAME=
+ARG PYTHON_VERSION=3.7
+ARG CONDA_ENV_NAME=timer
+ARG TF_VERSION=1.15.5
+
+ARG UID=
+ARG USER_NAME=
+ARG ENV_FILE_NAME=timer1
+
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+# 필수 설치요소들 설치
+######### 2. GPG Key 변경
+# Install dependencies
+RUN  apt-key del 7fa2af80 \
+&& apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub \
+&& apt-get update -y \
+&& apt-get upgrade -y \
+&& apt-get -y install build-essential \
+&& apt-get -y install libgl1-mesa-glx\
+&& apt-get -y install libglib2.0-0 \  
+&& apt-get -y install --no-install-recommends \
+    ca-certificates \
+    ccache \
+    cmake \
+    curl \
+    wget \
+    git \
+    libfreetype6-dev \
+    libhdf5-serial-dev \
+    libzmq3-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    pkg-config \
+    software-properties-common \
+    ssh \
+    sudo \
+    unzip \
+    wget
+RUN rm -rf /var/lib/apt/lists/*
+
+# For CUDA profiling
+ENV LD_LIBRARY_PATH /usr/local/cuda-${CUDA}/targets/x86_64-linux/lib:/usr/local/cuda/extras/CUPTI/lib64:/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 && \
+    echo "/usr/local/cuda/lib64/stubs" > /etc/ld.so.conf.d/z-cuda-stubs.conf && \
+    ldconfig
+# Ensure the NVIDIA libraries are available
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:$PATH
+
+# Install Miniconda to manage Python environments
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /usr/local/conda && \
+    rm ~/miniconda.sh && \
+    /usr/local/conda/bin/conda clean --all --yes
+
+
+# Create a user
+RUN adduser $USER_NAME -u $UID --quiet --gecos "" --disabled-password && \
+    echo "$USER_NAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME && \
+    chmod 0440 /etc/sudoers.d/$USER_NAME
+
+# For connecting via ssh
+RUN echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
+    echo "PermitEmptyPasswords yes" >> /etc/ssh/sshd_config && \
+    echo "UsePAM no" >> /etc/ssh/sshd_config
+
+USER $USER_NAME
+SHELL ["/bin/bash", "-c"]
+
+# Set the environment variables
+ENV PATH=/usr/local/conda/bin:$PATH
+# Create and activate the 'ENV_FILE_NAME' environment
+COPY ${ENV_FILE_NAME}.yml /tmp/timer.yml
+RUN conda update -y conda
+# Set the environment variables for the CONDA_ENV_NAME environment
+ENV PATH=/usr/local/conda/envs/$CONDA_ENV_NAME/bin:$PATH
+
+# Create the conda environment
+RUN conda create -n $CONDA_ENV_NAME python=$PYTHON_VERSION
+# Set the default environment when running the container
+RUN echo "source activate ${CONDA_ENV_NAME}" >> ~/.bashrc
+
+# RUN conda env update -f ${ENV_FILE_NAME}.yaml
+RUN conda env update --name $CONDA_ENV_NAME --file /tmp/timer.yml --prune
+# # txt 파일 사용
+# RUN conda create -n $CONDA_ENV_NAME --file package-list.txt
+# # yaml 파일 사용, CONDA_ENV_NAME과 일치하는지 확인 필수
+# RUN echo "source activate ${CONDA_ENV_NAME}" >> ~/.bashrc
+
+
+## Enable jupyter lab
+RUN source activate ${CONDA_ENV_NAME} && \
+    conda install -c conda-forge jupyterlab && \
+    jupyter serverextension enable --py jupyterlab --sys-prefix
+
+
+# Activate CONDA_ENV_NAME environment and install TensorFlow 1.15 (with CUDA 10.0)
+RUN /bin/bash -c "source activate ${CONDA_ENV_NAME} && conda install tensorflow-gpu=${TF_VERSION} -y"
+#PIP install
+# RUN source activate ${CONDA_ENV_NAME} && python -m pip install --no-cache-dir tensorflow-gpu==${TF_VERSION}
+
+# Activate 'CONDA_ENV_NAME' environment and install compatible PyTorch (CUDA 10.0)
+# RUN /bin/bash -c "source activate ${CONDA_ENV_NAME} && conda install pytorch torchvision torchaudio cudatoolkit=${CUDA} -c pytorch -y"
+
+# Set the working directory
+WORKDIR /workspace
+
+# Expose Jupyter notebook and tensorboard ports
+EXPOSE 8888 6006
+
+# Run a shell by default
+CMD ["/bin/bash"]
+
+#Refer: https://sseongju1.tistory.com/62
+# docker build -t tf1:20.12 -f Dockerfile .
+
+### 1. Image 생성
+# docker build -t tf1:20.12 --build-arg UID=$UID --build-arg USER_NAME=$USER --build-arg CUDA_VERSION=11.3.1 --build-arg CUDA=11.3 --build-arg CUDNN=$USER --build-arg PYTHON_VERSION=3.6 --build-arg CONDA_ENV_NAME=timer -f Dockerfile .
+### 2. Container 실행
+#### 'CONTAINER ID def94daa163a, NAMES romantic_lumiere' 실행
+# docker run -it --gpus all -p 8888:8888 -v $PWD:/workspace -w /workspace tf0 /bin/bash
+# docker run -d -it --rm --gpus all --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --runtime=nvidia -p 8888:8888 -v $PWD:/workspace/VIF 54c48e95b596 /bin/bash
+#### 'CONTAINER ID def94daa163a, NAMES romantic_lumiere' 실행
+# docker exec -it eec18700d0d5 /bin/bash
+# conda env update --file timer1.yml --prune
