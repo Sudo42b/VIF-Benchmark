@@ -79,8 +79,10 @@ Method_list = ['CSF', 'CUFD', 'DIDFuse', 'DIVFusion', 'DenseFuse',
                'SeAFusion', 'SuperFusion', 'SwinFusion', 'TarDAL', 'U2Fusion', 
                'UMF-CMGR']
 
+
 print(len(Method_list))
 two_model_list =['CSF', 'CUFD', 'DIDFuse', 'DIVFusion', 'RFN-Nest'] 
+
 
 for Method in tqdm(Method_list):
     save_dir_method = os.path.join(save_dir, Method)

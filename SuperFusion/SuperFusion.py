@@ -10,6 +10,7 @@ device = torch.device("cuda:{}".format(0) if torch.cuda.is_available() else "cpu
 def main(Method = 'SuperFusion', model_path='', ir_dir='', vi_dir='', save_dir='', is_RGB=True):  
     os.makedirs(save_dir, exist_ok=True)
     model = SuperFusion()
+    model.setgpu(device=device)
     model.resume(model_path)
     model = model.to(device)
     model.eval()

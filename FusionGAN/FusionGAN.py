@@ -31,6 +31,7 @@ def prepare_data(dataset):
     data_dir = os.path.join(os.sep, (os.path.join(os.getcwd(), dataset)))
     data = glob.glob(os.path.join(data_dir, "*.png"))
     data.extend(glob.glob(os.path.join(data_dir, "*.bmp")))
+    data.extend(glob.glob(os.path.join(data_dir, "*.jpg")))
     data.sort(key=lambda x: int(x[len(data_dir) + 1:-4]))
     # data.sort(key=lambda x: int(x[len(data_dir) + 1:-5]))
     return data

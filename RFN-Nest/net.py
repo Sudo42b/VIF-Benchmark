@@ -49,8 +49,7 @@ class UpsampleReshape_eval(torch.nn.Module):
                 bot = int(top_bot - top)
 
         reflection_padding = [left, right, top, bot]
-        reflection_pad = nn.ReflectionPad2d(reflection_padding)
-        x2 = reflection_pad(x2)
+        x2 = F.pad(x2, reflection_padding, mode='reflect')
         return x2
 
 

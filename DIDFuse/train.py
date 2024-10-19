@@ -33,7 +33,7 @@ if Train_data_choose=='FLIR':
 root_VIS = train_data_path+'VIS\\'
 root_IR = train_data_path+'\\IR\\'
 train_path = '.\\Train_result\\'
-device = "cuda"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 batch_size=24
 channel=64

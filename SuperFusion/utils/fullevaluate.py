@@ -35,7 +35,7 @@ class MscEval(object):
 
     def pad_tensor(self, inten, size):
         N, C, H, W = inten.size()
-        outten = torch.zeros(N, C, size[0], size[1]).cuda()
+        outten = torch.zeros(N, C, size[0], size[1]).to(device)
         outten.requires_grad = False
         margin_h, margin_w = size[0] - H, size[1] - W
         hst, hed = margin_h // 2, margin_h // 2 + H
@@ -74,7 +74,7 @@ class MscEval(object):
             N, C, H, W = im.size()
             n_x = math.ceil((W - cropsize) / stride) + 1
             n_y = math.ceil((H - cropsize) / stride) + 1
-            prob = torch.zeros(N, self.n_classes, H, W).cuda()
+            prob = torch.zeros(N, self.n_classes, H, W).to(device)
             prob.requires_grad = False
             for iy in range(n_y):
                 for ix in range(n_x):
@@ -152,7 +152,7 @@ class MscEval(object):
             N, _, H, W = label.shape
             probs = torch.zeros((N, self.n_classes, H, W))
             probs.requires_grad = False
-            imgs = imgs.cuda()
+            imgs = imgs.to(device)
             prob = self.net(imgs)
             probs = prob[0].data.cpu().numpy()
             preds = np.argmax(probs, axis=1)

@@ -10,7 +10,7 @@ from utils import get_images, save_images, get_train_images, get_test_image_rgb
 import time
 import xlwt
 import xlrd
-from xlutils.copy import copy
+from copy import copy
 import os
 
 def stats_graph(graph):

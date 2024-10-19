@@ -27,9 +27,9 @@ def img2RGB(f_name, vi_name):
 def main(Method = 'SeAFusion', model_path='', ir_dir='', vi_dir='', save_dir='', is_RGB=True):  
     fuse_scheme = 0
     model = myIFCNN(fuse_scheme=fuse_scheme)
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.eval()
     model = model.to(device)
     os.makedirs(save_dir, exist_ok=True)
     file_list = natsorted(os.listdir(ir_dir))

@@ -8,7 +8,8 @@ import kornia.utils as KU
 import kornia.filters as KF
 from copy import deepcopy
 import os
-from .irnn import irnn
+# from .irnn import irnn
+from .irnn_m import irnn
 # os.environ['CUDA_VISIBLE_DEVICES']='2'
 deivce = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class SpatialTransformer(nn.Module):
@@ -242,25 +243,82 @@ class DenseMatcher(nn.Module):
             'down4':down4,
             'down8':donw8}    
         return {'ir2vis':disp_12,'vis2ir':disp_21}
+import torch.nn.functional as F
+class IRNN(nn.Module):
+    def __init__(self, channels):
+        super(IRNN, self).__init__()
+        self.channels = channels
+        
+        self.weight_up = nn.Parameter(torch.Tensor(channels, 1, 1))
+        self.weight_right = nn.Parameter(torch.Tensor(channels, 1, 1))
+        self.weight_down = nn.Parameter(torch.Tensor(channels, 1, 1))
+        self.weight_left = nn.Parameter(torch.Tensor(channels, 1, 1))
+        
+        self.bias_up = nn.Parameter(torch.Tensor(channels))
+        self.bias_right = nn.Parameter(torch.Tensor(channels))
+        self.bias_down = nn.Parameter(torch.Tensor(channels))
+        self.bias_left = nn.Parameter(torch.Tensor(channels))
+        
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.xavier_uniform_(self.weight_up)
+        nn.init.xavier_uniform_(self.weight_right)
+        nn.init.xavier_uniform_(self.weight_down)
+        nn.init.xavier_uniform_(self.weight_left)
+        nn.init.zeros_(self.bias_up)
+        nn.init.zeros_(self.bias_right)
+        nn.init.zeros_(self.bias_down)
+        nn.init.zeros_(self.bias_left)
+
+    def forward(self, input_feature):
+        batch_size, channels, height, width = input_feature.shape
+        
+        output_up = torch.zeros_like(input_feature)
+        output_right = torch.zeros_like(input_feature)
+        output_down = torch.zeros_like(input_feature)
+        output_left = torch.zeros_like(input_feature)
+
+        # Up direction
+        output_up[:, :, -1, :] = F.relu(input_feature[:, :, -1, :])
+        for h in range(height - 2, -1, -1):
+            temp = output_up[:, :, h+1, :] * self.weight_up.view(1, -1, 1) + self.bias_up.view(1, -1, 1) + input_feature[:, :, h, :]
+            output_up[:, :, h, :] = F.relu(temp)
+
+        # Right direction
+        output_right[:, :, :, 0] = F.relu(input_feature[:, :, :, 0])
+        for w in range(1, width):
+            temp = output_right[:, :, :, w-1] * self.weight_right.view(1, -1, 1) + self.bias_right.view(1, -1, 1) + input_feature[:, :, :, w]
+            output_right[:, :, :, w] = F.relu(temp)
+
+        # Down direction
+        output_down[:, :, 0, :] = F.relu(input_feature[:, :, 0, :])
+        for h in range(1, height):
+            temp = output_down[:, :, h-1, :] * self.weight_down.view(1, -1, 1) + self.bias_down.view(1, -1, 1) + input_feature[:, :, h, :]
+            output_down[:, :, h, :] = F.relu(temp)
+
+        # Left direction
+        output_left[:, :, :, -1] = F.relu(input_feature[:, :, :, -1])
+        for w in range(width - 2, -1, -1):
+            temp = output_left[:, :, :, w+1] * self.weight_left.view(1, -1, 1) + self.bias_left.view(1, -1, 1) + input_feature[:, :, :, w]
+            output_left[:, :, :, w] = F.relu(temp)
+
+        return output_up, output_right, output_down, output_left
 
 class Spacial_IRNN(nn.Module):
     def __init__(self, in_channels, alpha=0.2):
         super(Spacial_IRNN, self).__init__()
-        self.left_weight = nn.Conv2d(in_channels, in_channels, kernel_size=1, stride=1, groups=in_channels, padding=0)
-        self.right_weight = nn.Conv2d(in_channels, in_channels, kernel_size=1, stride=1, groups=in_channels, padding=0)
-        self.up_weight = nn.Conv2d(in_channels, in_channels, kernel_size=1, stride=1, groups=in_channels, padding=0)
-        self.down_weight = nn.Conv2d(in_channels, in_channels, kernel_size=1, stride=1, groups=in_channels, padding=0)
-        self.left_weight.weight = nn.Parameter(torch.tensor([[[[alpha]]]] * in_channels))
-        self.right_weight.weight = nn.Parameter(torch.tensor([[[[alpha]]]] * in_channels))
-        self.up_weight.weight = nn.Parameter(torch.tensor([[[[alpha]]]] * in_channels))
-        self.down_weight.weight = nn.Parameter(torch.tensor([[[[alpha]]]] * in_channels))
-        self.IRNN = irnn()
+        self.irnn = IRNN(in_channels)
+        
+        # Initialize weights with alpha
+        with torch.no_grad():
+            self.irnn.weight_up.fill_(alpha)
+            self.irnn.weight_right.fill_(alpha)
+            self.irnn.weight_down.fill_(alpha)
+            self.irnn.weight_left.fill_(alpha)
 
-    def forward(self, input):
-        output = self.IRNN.apply(input, self.up_weight.weight, self.right_weight.weight, self.down_weight.weight,
-                      self.left_weight.weight, self.up_weight.bias, self.right_weight.bias, self.down_weight.bias,
-                      self.left_weight.bias)
-        return output
+    def forward(self, x):
+        return self.irnn(x)
 
 
 class Attention(nn.Module):

@@ -27,9 +27,9 @@ def main(Method = 'TarDAL', model_path='', ir_dir='', vi_dir='', save_dir='', is
     root_vi = Path(vi_dir)
     ir_paths = [x for x in natsorted((root_ir).glob('*')) if img_filter]
     vi_paths = [x for x in natsorted((root_vi).glob('*')) if img_filter]
-
+    is_cuda = True if torch.cuda.is_available() else False
     # fuse
-    f = Eval(net, cudnn=True, half=True, eval=True)
+    f = Eval(net, cudnn=is_cuda, half=False, eval=True)
 
     f(ir_paths, vi_paths, Path(save_dir), True)
 

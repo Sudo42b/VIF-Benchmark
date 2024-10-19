@@ -21,8 +21,6 @@ import argparse
 # Test Details 
 # =============================================================================
 def main(Method = 'DIDFUse', model_path_1='', model_path_2='', ir_dir='', vi_dir='', save_dir='', is_RGB=True):  
-    
-    device='cuda'
     addition_mode='l1_norm'#'Sum'&'Average'&'l1_norm'
     os.makedirs(save_dir, exist_ok=True)
     filelist = natsorted(os.listdir(ir_dir))
@@ -31,12 +29,17 @@ def main(Method = 'DIDFUse', model_path_1='', model_path_2='', ir_dir='', vi_dir
         ir_path = os.path.join(ir_dir, item)
         vi_path = os.path.join(vi_dir, item)
         save_path = os.path.join(save_dir, item)
-        ir_img = Image.open(ir_path)
-        vi_img = Image.open(vi_path)
+        ir_img = Image.open(ir_path).convert('L') #Grayscale
+        vi_img = Image.open(vi_path).convert('L')
         start = time()
         fused_img = Test_fusion(ir_img, vi_img, addition_mode, model_path_1, model_path_2)
         end = time()
-        imsave(save_path,fused_img)
+        fused_img = np.array(fused_img).astype(dtype=np.uint8)  # Ensure fused_img is a valid numpy array
+        fused_img_pil = Image.fromarray(fused_img)
+        
+        fused_img_rgb = fused_img_pil.convert('RGB')
+        fused_img_rgb.save(save_path)
+        
         test_bar.set_description('{} | {} | {:.4f} s'.format(Method, item, end-start))
     
 if __name__ == '__main__':

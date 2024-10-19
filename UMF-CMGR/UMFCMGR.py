@@ -6,8 +6,6 @@ import time
 import os
 import cv2
 import kornia
-import torch.backends.cudnn
-import torch.cuda
 import torch.utils.data
 from torch import Tensor
 from tqdm import tqdm
@@ -17,19 +15,15 @@ from models.fusion_net import FusionNet
 import argparse
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def main(Method='UMF-CMGR', model_path='', ir_dir='', vi_dir='', save_dir='', is_RGB=True):  
-    cuda = True
-    if cuda and torch.cuda.is_available():
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    else:
-        raise Exception("No GPU found...")
-    torch.backends.cudnn.benchmark = True
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # torch.backends.cudnn.benchmark = True
     
     data = FuseTestData(ir_dir, vi_dir)
     test_data_loader = torch.utils.data.DataLoader(data, 1, False, pin_memory=True)
     net = FusionNet(nfeats=64).to(device)
 
     print("===> loading trained model '{}'".format(model_path))
-    model_state_dict = torch.load(model_path)['net']
+    model_state_dict = torch.load(model_path, map_location=device)['net']
     net.load_state_dict(model_state_dict)
 
     print("===> Starting Testing")    
@@ -63,8 +57,9 @@ def img2RGB(f_name, vi_name):
     
 def test(net, test_data_loader, dst, device):
     pass
-        
-def imsave(im_s: [Tensor], dst: pathlib.Path, im_name: str = ''):
+
+from typing import List, Tuple
+def imsave(im_s: List[Tensor], dst: pathlib.Path, im_name: str = ''):
     """
     save images to path
     :param im_s: image(s)

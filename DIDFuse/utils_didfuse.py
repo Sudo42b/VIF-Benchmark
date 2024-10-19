@@ -53,7 +53,7 @@ def YCbCr2RGB(Y, Cb, Cr):
 
 
 def output_img(x):
-    return (x.cpu().detach().numpy()[0,:,:,:].transpose(1, 2, 0)*255.0).astype('uint8')
+    return x.cpu().detach().numpy()[0,0,:,:]*255.0
 
 def l1_addition(y1,y2,window_width=1):
       ActivityMap1 = y1.abs()
@@ -71,27 +71,27 @@ def l1_addition(y1,y2,window_width=1):
 def Test_fusion(img_test1,img_test2,addition_mode='Sum', 
                 En_model_path="/data/timer/Comparison/VIF/DIDFuse/Models/Encoder_weight_IJCAI.pkl", 
                 De_model_path="/data/timer/Comparison/VIF/DIDFuse/Models/Decoder_weight_IJCAI.pkl"):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     AE_Encoder1 = AE_Encoder().to(device)
-    AE_Encoder1.load_state_dict(torch.load(En_model_path)['weight'])
-    
-    AE_Decoder1 = AE_Decoder().to(device)
-    AE_Decoder1.load_state_dict(torch.load(De_model_path)['weight'])
+    AE_Encoder1.load_state_dict(torch.load(En_model_path, map_location=device)['weight'])
     AE_Encoder1.eval()
+    AE_Decoder1 = AE_Decoder().to(device)
+    AE_Decoder1.load_state_dict(torch.load(De_model_path, map_location=device)['weight'])
     AE_Decoder1.eval()
     
-    img_test1 = np.array(img_test1, dtype='float32')/255# 将其转换为一个矩阵
+    img_test1 = np.array(img_test1, dtype='float32')/255# Convert it to a matrix
     img_test1 = torch.from_numpy(img_test1.reshape((1, 1, img_test1.shape[0], img_test1.shape[1])))
-    ## 假设img_test2是彩色图像，使用其Y通道进行融合
-    img_test2 = np.array(img_test2, dtype='float32')/255 # 将其转换为一个矩阵
-    img_test2 =  np.expand_dims(img_test2.transpose(2, 0, 1), axis=0)
-    img_test2 = torch.from_numpy(img_test2)
     
-    vi_Y, vi_Cb, vi_Cr = RGB2YCrCb(img_test2)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    ## Assuming img_test2 is a color image, use its Y channel for fusion
+    img_test2 = np.array(img_test2, dtype='float32')/255 # Convert it to a matrix
+    img_test2 = torch.from_numpy(img_test2.reshape((1, 1, img_test2.shape[0], img_test2.shape[1])))
+    
+    
     img_test1=img_test1.to(device)
-    img_test2=vi_Y.to(device)
-    vi_Cb = vi_Cb.to(device)
-    vi_Cr = vi_Cr.to(device)
+    img_test2=img_test2.to(device)
+    
+    # vi_Cb = vi_Cb.to(device)
+    # vi_Cr = vi_Cr.to(device)
     
     with torch.no_grad():
         F_i1,F_i2,F_ib,F_id=AE_Encoder1(img_test1)
@@ -118,5 +118,5 @@ def Test_fusion(img_test1,img_test2,addition_mode='Sum',
     with torch.no_grad():
         Out = AE_Decoder1(F_1,F_2,F_b,F_d)
     
-    Out = YCbCr2RGB(Out, vi_Cb, vi_Cr)
+    # Out = YCbCr2RGB(Out, vi_Cb, vi_Cr)
     return output_img(Out)

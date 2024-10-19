@@ -164,9 +164,8 @@ class VGG19(torch.nn.Module):
 class VGGLoss(nn.Module):
     def __init__(self):
         super(VGGLoss, self).__init__()
-        self.vgg = VGG19()
-        if torch.cuda.is_available():
-            self.vgg.to(device)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.vgg = VGG19().to(device)
         self.vgg.eval()
         set_requires_grad(self.vgg, False)
         self.L1Loss = nn.L1Loss()
@@ -222,6 +221,7 @@ class ncc_loss(nn.Module):
         return I_var, J_var, cross
 
     def forward(self, I, J, win=[15]):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         ndims = len(list(I.size())) - 2
         assert ndims in [1, 2, 3], "volumes should be 1 to 3 dimensions. found: %d" % ndims
         if win is None:
@@ -289,6 +289,7 @@ def l2loss(img1,img2,mask=1,eps=1e-2):
 class gradientloss(nn.Module):
     def __init__(self):
         super(gradientloss,self).__init__()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.AP5 = nn.AvgPool2d(5,stride=1,padding=2).to(device)
         self.MP5 = nn.MaxPool2d(5,stride=1,padding=2).to(device)
     def forward(self,img1,img2,mask=1,eps=1e-2):

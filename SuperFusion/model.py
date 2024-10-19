@@ -331,7 +331,7 @@ class SuperFusion(nn.Module):
 
     def resume(self, model_dir, train=True):
         self.resume_flag = True
-        checkpoint = torch.load(model_dir)
+        checkpoint = torch.load(model_dir, map_location=self.gpu)
         # weight
         try:
             self.DM.load_state_dict({k: v for k, v in checkpoint['DM'].items() if k in self.DM.state_dict()})

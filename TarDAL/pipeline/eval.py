@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List
 
 import torch
-import torch.backends.cudnn
 from tqdm import tqdm
 import pandas as pd
 from openpyxl import load_workbook
@@ -70,8 +69,7 @@ def get_parameter_number(net):
 
 
 class Eval:
-    def __init__(self, net, cudnn: bool = True, half: bool = False, eval: bool = False):
-        torch.backends.cudnn.benchmark = cudnn
+    def __init__(self, net, cudnn: bool = False, half: bool = False, eval: bool = False):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.half = half
         _ = net.half() if half else None
@@ -95,9 +93,9 @@ class Eval:
             start = time.time()
             ir, vi = [ir.half(), vi.half()] if self.half else [ir, vi]
             ir, vi = ir.to(self.device), vi.to(self.device)
-            torch.cuda.synchronize()
+            # torch.cuda.synchronize()
             fus = self.net(ir.unsqueeze(0), vi.unsqueeze(0)).clip(0., 1.)
-            torch.cuda.synchronize()
+            # torch.cuda.synchronize()
             end = time.time()
             time_list.append(end - start)
             pair.save_fus(dst / ir_path.name, fus, color)

@@ -1,7 +1,7 @@
 import torch
 
 import math
-import cupy
+# import cupy
 from torch import nn
 import torch.nn.functional as F
 class Stream:
