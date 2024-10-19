@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from Network import AE_Encoder,AE_Decoder
 import torch.nn.functional as F
-
+device= torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def RGB2YCrCb(rgb_image):
     """
     将RGB格式转换为YCrCb格式
@@ -50,7 +50,7 @@ def YCbCr2RGB(Y, Cb, Cr):
     out = out.clamp(0,1.0)
     return out
 
-device='cuda'
+
 
 def output_img(x):
     return (x.cpu().detach().numpy()[0,:,:,:].transpose(1, 2, 0)*255.0).astype('uint8')
@@ -87,11 +87,11 @@ def Test_fusion(img_test1,img_test2,addition_mode='Sum',
     img_test2 = torch.from_numpy(img_test2)
     
     vi_Y, vi_Cb, vi_Cr = RGB2YCrCb(img_test2)
-    
-    img_test1=img_test1.cuda()
-    img_test2=vi_Y.cuda()    
-    vi_Cb = vi_Cb.cuda()
-    vi_Cr = vi_Cr.cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    img_test1=img_test1.to(device)
+    img_test2=vi_Y.to(device)
+    vi_Cb = vi_Cb.to(device)
+    vi_Cr = vi_Cr.to(device)
     
     with torch.no_grad():
         F_i1,F_i2,F_ib,F_id=AE_Encoder1(img_test1)

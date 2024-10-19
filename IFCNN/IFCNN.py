@@ -29,7 +29,8 @@ def main(Method = 'SeAFusion', model_path='', ir_dir='', vi_dir='', save_dir='',
     model = myIFCNN(fuse_scheme=fuse_scheme)
     model.load_state_dict(torch.load(model_path))
     model.eval()
-    model = model.cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
     os.makedirs(save_dir, exist_ok=True)
     file_list = natsorted(os.listdir(ir_dir))
     mean=[0.485, 0.456, 0.406] # normalization parameters
@@ -56,7 +57,7 @@ def main(Method = 'SeAFusion', model_path='', ir_dir='', vi_dir='', save_dir='',
             begin_time = time.time()
             # perform image fusion
             with torch.no_grad():
-                res = model(Variable(img1.cuda()), Variable(img2.cuda()))
+                res = model(Variable(img1.to(device)), Variable(img2.to(device)))
                 res = denorm(mean, std, res[0]).clamp(0, 1) * 255
                 res_img = res.cpu().data.numpy().astype('uint8')
                 img = res_img.transpose([1,2,0])
@@ -67,7 +68,8 @@ def main(Method = 'SeAFusion', model_path='', ir_dir='', vi_dir='', save_dir='',
             if is_RGB:
                 img2RGB(fused_image_name, vi_image_name)  
             test_bar.set_description('{} | {} | {:.4f} s'.format(Method, item, proc_time))
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
                 
            
 

@@ -12,6 +12,7 @@ from utils.utils import RGB2YCrCb, YCbCr2RGB
 dir_path = os.path.dirname(os.path.realpath(__file__))
 parent_dir_path = os.path.abspath(os.path.join(dir_path, os.pardir))
 sys.path.insert(0, parent_dir_path)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from modules.modules import DenseMatcher, SpatialTransformer, FusionNet, get_scheduler, gaussian_weights_init
 
 
@@ -54,10 +55,10 @@ class SuperFusion(nn.Module):
         self.DM_sch = get_scheduler(self.DM_opt, opts, last_ep)
         self.FN_sch = get_scheduler(self.FN_opt, opts, last_ep)
 
-    def setgpu(self, gpu):
-        self.gpu = gpu
-        self.DM.cuda(self.gpu)
-        self.FN.cuda(self.gpu)
+    def setgpu(self, device):
+        self.gpu = device
+        self.DM.to(device)
+        self.FN.to(device)
 
     def test_forward(self, image_ir, image_vi):
         deformation = self.DM(image_ir, image_vi)

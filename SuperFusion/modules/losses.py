@@ -21,7 +21,7 @@ from math import exp
 # https://github.com/Po-Hsun-Su/pytorch-ssim
 # ============================================
 """
-
+deivce = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def gaussian(window_size, sigma):
     gauss = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x in range(window_size)])
@@ -63,7 +63,7 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True, mask=1):
 def Contrast(img1, img2, window_size=11, channel=1):
     window = create_window(window_size, channel)    
     if img1.is_cuda:
-        window = window.cuda(img1.get_device())
+        window = window.to(img1.get_device())
     window = window.type_as(img1)
     mu1 = F.conv2d(img1, window, padding=window_size//2, groups=channel)
     mu2 = F.conv2d(img2, window, padding=window_size//2, groups=channel)
@@ -93,7 +93,7 @@ class SSIMLoss(torch.nn.Module):
             window = create_window(self.window_size, channel)
 
             if img1.is_cuda:
-                window = window.cuda(img1.get_device())
+                window = window.to(img1.get_device())
             window = window.type_as(img1)
 
             self.window = window
@@ -109,7 +109,7 @@ def ssim(img1, img2, window_size=11, size_average=True):
     window = create_window(window_size, channel)
     
     if img1.is_cuda:
-        window = window.cuda(img1.get_device())
+        window = window.to(img1.get_device())
     window = window.type_as(img1)
     
     return _ssim(img1, img2, window, window_size, channel, size_average)
@@ -166,7 +166,7 @@ class VGGLoss(nn.Module):
         super(VGGLoss, self).__init__()
         self.vgg = VGG19()
         if torch.cuda.is_available():
-            self.vgg.cuda()
+            self.vgg.to(device)
         self.vgg.eval()
         set_requires_grad(self.vgg, False)
         self.L1Loss = nn.L1Loss()
@@ -228,7 +228,7 @@ class ncc_loss(nn.Module):
             win = [9] * ndims
         else:
             win = win * ndims
-        sum_filt = torch.ones([1, I.shape[1], *win]).cuda()/I.shape[1]
+        sum_filt = torch.ones([1, I.shape[1], *win]).to(device)/I.shape[1]
         pad_no = math.floor(win[0] / 2)
         if ndims == 1:
             stride = (1)
@@ -289,8 +289,8 @@ def l2loss(img1,img2,mask=1,eps=1e-2):
 class gradientloss(nn.Module):
     def __init__(self):
         super(gradientloss,self).__init__()
-        self.AP5 = nn.AvgPool2d(5,stride=1,padding=2).cuda()
-        self.MP5 = nn.MaxPool2d(5,stride=1,padding=2).cuda()
+        self.AP5 = nn.AvgPool2d(5,stride=1,padding=2).to(device)
+        self.MP5 = nn.MaxPool2d(5,stride=1,padding=2).to(device)
     def forward(self,img1,img2,mask=1,eps=1e-2):
         #img1 = KF.gaussian_blur2d(img1,[7,7],[2,2])
         mask_ = torch.logical_and(img1>1e-2,img2>1e-2)
@@ -340,8 +340,8 @@ def l2regularization(img):
 # class gradientloss(nn.Module):
 #     def __init__(self):
 #         super(gradientloss,self).__init__()
-#         self.AP5 = nn.AvgPool2d(5,stride=1,padding=2).cuda()
-#         self.MP5 = nn.MaxPool2d(5,stride=1,padding=2).cuda()
+#         self.AP5 = nn.AvgPool2d(5,stride=1,padding=2).to(device)
+#         self.MP5 = nn.MaxPool2d(5,stride=1,padding=2).to(device)
 #     def forward(self,img1,img2,mask=1,eps=1e-3):
 #         #img1 = KF.gaussian_blur2d(img1,[7,7],[2,2])
 #         #img2 = KF.gaussian_blur2d(img2,[7,7],[2,2])

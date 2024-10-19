@@ -10,7 +10,7 @@ from os import listdir
 from os.path import join
 
 EPSILON = 1e-5
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def list_images(directory):
     images = []
     names = []
@@ -124,16 +124,22 @@ def recons_fusion_images(img_lists, h, w):
     h_cen = int(np.floor(h / 2))
     w_cen = int(np.floor(w / 2))
     c = img_lists[0][0].shape[1]
-    ones_temp = torch.ones(1, c, h, w).cuda()
+    if args.cuda:
+        ones_temp = torch.ones(1, c, h, w).to(device)
+    else:
+        ones_temp = torch.ones(1, c, h, w)
     for i in range(len(img_lists[0])):
         # img1, img2, img3, img4
         img1 = img_lists[0][i]
         img2 = img_lists[1][i]
         img3 = img_lists[2][i]
         img4 = img_lists[3][i]
-
-        img_f = torch.zeros(1, c, h, w).cuda()
-        count = torch.zeros(1, c, h, w).cuda()
+        if args.cuda:
+            img_f = torch.zeros(1, c, h, w).to(device)
+            count = torch.zeros(1, c, h, w).to(device)
+        else:
+            img_f = torch.zeros(1, c, h, w)
+            count = torch.zeros(1, c, h, w)
 
         img_f[:, :, 0:h_cen + 3, 0: w_cen + 3] += img1
         count[:, :, 0:h_cen + 3, 0: w_cen + 3] += ones_temp[:, :, 0:h_cen + 3, 0: w_cen + 3]

@@ -16,7 +16,7 @@ from tqdm import tqdm
 from PIL import Image
 from time import time
 import argparse
-
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def load_model(path, deepsupervision=False):
     input_nc = 1
@@ -26,7 +26,7 @@ def load_model(path, deepsupervision=False):
     nest_model = NestFuse_autoencoder(nb_filter, input_nc, output_nc, deepsupervision)
     nest_model.load_state_dict(torch.load(path))
     nest_model.eval()
-    nest_model.cuda()
+    nest_model.to(device)
 
     return nest_model
 
@@ -37,9 +37,8 @@ def run_demo(nest_model, infrared_path, visible_path, output_path, f_type):
 
     # dim = img_ir.shape
     if c is 1:
-        if args.cuda:
-            img_ir = img_ir.cuda()
-            img_vi = img_vi.cuda()
+        img_ir = img_ir.to(device)
+        img_vi = img_vi.to(device)
         img_ir = Variable(img_ir, requires_grad=False)
         img_vi = Variable(img_vi, requires_grad=False)
         # encoder
@@ -56,9 +55,9 @@ def run_demo(nest_model, infrared_path, visible_path, output_path, f_type):
             # encoder
             img_vi_temp = img_vi[i]
             img_ir_temp = img_ir[i]
-            if args.cuda:
-                img_vi_temp = img_vi_temp.cuda()
-                img_ir_temp = img_ir_temp.cuda()
+            
+            img_vi_temp = img_vi_temp.to(device)
+            img_ir_temp = img_ir_temp.to(device)
             img_vi_temp = Variable(img_vi_temp, requires_grad=False)
             img_ir_temp = Variable(img_ir_temp, requires_grad=False)
 
@@ -108,7 +107,8 @@ def main(Method='NestFuse', model_path='', ir_dir='', vi_dir='', save_dir='', is
             if is_RGB:
                 img2RGB(save_path, visible_path)
             test_bar.set_description('{} | {} {:.4f}'.format(Method, item, end - start))
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 if __name__ == '__main__':

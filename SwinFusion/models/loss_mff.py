@@ -7,7 +7,7 @@ from torchvision.models.vgg import vgg16
 import numpy as np
 import torchvision.transforms.functional as TF
 from models.loss_ssim import ssim
-
+deivce = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class L_color(nn.Module):
 
     def __init__(self):
@@ -50,8 +50,8 @@ class Sobelxy(nn.Module):
                   [-1, -2, -1]]
         kernelx = torch.FloatTensor(kernelx).unsqueeze(0).unsqueeze(0)
         kernely = torch.FloatTensor(kernely).unsqueeze(0).unsqueeze(0)
-        self.weightx = nn.Parameter(data=kernelx, requires_grad=False).cuda()
-        self.weighty = nn.Parameter(data=kernely, requires_grad=False).cuda()
+        self.weightx = nn.Parameter(data=kernelx, requires_grad=False).to(device)
+        self.weighty = nn.Parameter(data=kernely, requires_grad=False).to(device)
     def forward(self,x):
         sobelx=F.conv2d(x, self.weightx, padding=1)
         sobely=F.conv2d(x, self.weighty, padding=1)

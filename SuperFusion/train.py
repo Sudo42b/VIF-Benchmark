@@ -12,7 +12,7 @@ from modules.TII import *
 from torch.utils.data import DataLoader
 from Fusion import run_fusion
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def evaluate(seg_model=None, logger=None):
     respth = opts.result_dir
     Method = opts.name
@@ -60,7 +60,7 @@ def main_FS(opts):
     seg_model = BiSeNet(n_classes=n_classes)
     pretrained_model_path = './checkpoint/Segmentation/Seg_model.pth'
     seg_model.load_state_dict(torch.load(pretrained_model_path))
-    seg_model.cuda(opts.gpu)
+    seg_model.to(device)
     seg_model.eval()
     logger.info('Load Segmentation Model from {} Sucessfully~'.format(pretrained_model_path))
     # daita loader
@@ -74,7 +74,7 @@ def main_FS(opts):
     # model
     print('\n--- load model ---')
     model = SuperFusion(opts)
-    model.setgpu(opts.gpu)
+    model.to(device)
     if opts.resume is None:
         ep0 = -1
         total_it = 0
@@ -97,9 +97,9 @@ def main_FS(opts):
         if dataset_name == "MSRS":
             for it, (image_ir, image_vi, label) in enumerate(train_loader):
                 # input data
-                image_ir = image_ir.cuda(opts.gpu).detach()
-                image_vi = image_vi.cuda(opts.gpu).detach()
-                label = label.cuda(opts.gpu).detach()
+                image_ir = image_ir.to(device).detach()
+                image_vi = image_vi.to(device).detach()
+                label = label.to(device).detach()
                 if len(image_ir.shape) > 4:
                     image_ir = image_ir.squeeze(1)
                     image_vi = image_vi.squeeze(1)
@@ -127,8 +127,8 @@ def main_FS(opts):
         else:
             for it, (image_ir, image_vi) in enumerate(train_loader):
                 # input data
-                image_ir = image_ir.cuda(opts.gpu).detach()
-                image_vi = image_vi.cuda(opts.gpu).detach()
+                image_ir = image_ir.to(device).detach()
+                image_vi = image_vi.to(device).detach()
                 if len(image_ir.shape) > 4:
                     image_ir = image_ir.squeeze(1)
                     image_vi = image_vi.squeeze(1)
@@ -184,7 +184,7 @@ def main_RF(opts):
     # model
     print('\n--- load model ---')
     model = SuperFusion(opts)
-    model.setgpu(opts.gpu)
+    model.to(device)
     if opts.resume is None:
         ep0 = -1
         total_it = 0
@@ -204,11 +204,11 @@ def main_RF(opts):
 
         for it, (image_ir, image_vi, image_ir_warp, image_vi_warp, deformation) in enumerate(train_loader):
             # input data
-            image_ir = image_ir.cuda(opts.gpu).detach()
-            image_vi = image_vi.cuda(opts.gpu).detach()
-            image_ir_warp = image_ir_warp.cuda(opts.gpu).detach()
-            image_vi_warp = image_vi_warp.cuda(opts.gpu).detach()
-            deformation = deformation.cuda(opts.gpu).detach()
+            image_ir = image_ir.to(device).detach()
+            image_vi = image_vi.to(device).detach()
+            image_ir_warp = image_ir_warp.to(device).detach()
+            image_vi_warp = image_vi_warp.to(device).detach()
+            deformation = deformation.to(device).detach()
             if len(image_ir.shape) > 4:
                 image_ir = image_ir.squeeze(1)
                 image_vi = image_vi.squeeze(1)

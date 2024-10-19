@@ -4,7 +4,7 @@ from tqdm import tqdm
 from time import time
 from utils.utils import *
 from dataset import TestData, imsave
-
+device = torch.device("cuda:{}".format(0) if torch.cuda.is_available() else "cpu")
 
 def run_fusion(dataset_name='MSRS', model=None, save_dir=None):
     if dataset_name == 'MSRS':
@@ -23,8 +23,8 @@ def run_fusion(dataset_name='MSRS', model=None, save_dir=None):
         
     p_bar = tqdm(enumerate(test_dataloader), total=len(test_dataloader))
     for idx, [ir, vi, name] in p_bar:
-        ir_tensor = ir.cuda()
-        vi_tensor = vi.cuda()
+        ir_tensor = ir.to(device)
+        vi_tensor = vi.to(device)
         start = time()
         with torch.no_grad():
             fu = model.fusion_forward(ir_tensor,vi_tensor)

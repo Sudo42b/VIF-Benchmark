@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import numpy as np
 
-gpu_use = True
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def construct_M(angle, scale_x, scale_y, center_x, center_y):
@@ -36,7 +36,7 @@ class ConstuctRotationLayer(nn.Module):
         tmp0 = torch.cat((alpha, beta), 1)
         tmp1 = torch.cat((-beta, alpha), 1)
         theta = torch.cat((tmp0, tmp1), 0)
-        t = torch.tensor([[0.], [0.]]).cuda()
+        t = torch.tensor([[0.], [0.]]).to(device)
         matrix = torch.cat((theta, t), 1)
         return theta, matrix
 
@@ -109,7 +109,7 @@ class SpatialTransformer(nn.Module):
         grids = torch.meshgrid(vectors)
         grid = torch.stack(grids) # y, x, z
         grid = torch.unsqueeze(grid, 0)  #add batch
-        grid = grid.type(torch.FloatTensor).cuda() if gpu_use else grid.type(torch.FloatTensor)
+        grid = grid.type(torch.FloatTensor).to(device)
         self.register_buffer('grid', grid)
 
         self.mode = mode
@@ -157,7 +157,7 @@ class PointSpatialTransformer(nn.Module):
         grids = torch.meshgrid(vectors)
         grid = torch.stack(grids)
         grid = torch.unsqueeze(grid, 0)
-        grid = grid.type(torch.FloatTensor).cuda() if gpu_use else grid.type(torch.FloatTensor)
+        grid = grid.type(torch.FloatTensor).to(device)
         self.register_buffer('grid', grid)
 
         self.mode = mode

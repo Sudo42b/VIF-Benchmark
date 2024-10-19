@@ -9,7 +9,7 @@ import numpy as np
 from tqdm import tqdm
 import math
 from PIL import Image
-
+deivce = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class MscEval(object):
     def __init__(
         self,

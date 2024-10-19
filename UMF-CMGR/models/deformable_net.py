@@ -4,7 +4,7 @@ from models.layers import SpatialTransformer, ResizeTransform, conv_block, predi
 import numpy as np
 
 shape = (256, 256)
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class DeformableNet(nn.Module):
     def __init__(self):
         super(DeformableNet, self).__init__()
@@ -141,21 +141,21 @@ def params_count(model):
 
 if __name__ == '__main__':
     #
-    model = DeformableNet().cuda()
-    a = torch.randn(2, 1, 256, 256).cuda()
-    b = torch.randn(2, 1, 256, 256).cuda()
+    model = DeformableNet().to(device)
+    a = torch.randn(2, 1, 256, 256).to(device)
+    b = torch.randn(2, 1, 256, 256).to(device)
     m_warp, f_warp, flow, int_flow1, int_flow2, disp_pre = model(a,b)
     print(m_warp.shape, f_warp.shape, flow.shape)
     print(int_flow1.shape, int_flow2.shape)
 
 
-    # model =DeformableNet().cuda()
+    # model =DeformableNet().to(device)
     # model.eval()
     # print("Params(M): %.2f" % (params_count(model) / (1000 ** 2)))
 
 
     # import time
-    # x = torch.Tensor(1, 1, 64, 64).cuda()
+    # x = torch.Tensor(1, 1, 64, 64).to(device)
     #
     # N = 10
     # with torch.no_grad():

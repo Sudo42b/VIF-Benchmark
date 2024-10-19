@@ -21,7 +21,7 @@ from net import NestFuse_autoencoder
 from args_fusion import args
 import pytorch_msssim
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def main():
 	original_imgs_path = utils_NestFuse.list_images(args.dataset)
 	train_num = 80000
@@ -56,7 +56,7 @@ def train(i, original_imgs_path):
 	ssim_loss = pytorch_msssim.msssim
 
 	if args.cuda:
-		nest_model.cuda()
+		nest_model.to(device)
 
 	tbar = trange(args.epochs)
 	print('Start training.....')
@@ -80,7 +80,7 @@ def train(i, original_imgs_path):
 			optimizer.zero_grad()
 			img = Variable(img, requires_grad=False)
 			if args.cuda:
-				img = img.cuda()
+				img = img.to(device)
 			# get fusion image
 			# encoder
 			en = nest_model.encoder(img)
@@ -151,7 +151,8 @@ def train(i, original_imgs_path):
 				scio.savemat(loss_filename_path, {'loss_all': loss_data})
 
 				nest_model.train()
-				nest_model.cuda()
+				if args.cuda:
+					nest_model.to(device)
 				tbar.set_description("\nCheckpoint, trained model saved at", save_model_path)
 
 	# pixel loss

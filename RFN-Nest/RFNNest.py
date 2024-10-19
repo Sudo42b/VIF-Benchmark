@@ -18,7 +18,7 @@ from natsort import natsorted
 from PIL import Image
 import argparse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-
+device= torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def img2RGB(f_name, vi_name):
     vi_img = Image.open(vi_name)
     vi_img = vi_img.convert('YCbCr')
@@ -56,8 +56,9 @@ def load_model(path_auto, path_fusion, fs_type, flag_img):
 
 	nest_model.eval()
 	fusion_model.eval()
-	nest_model.cuda()
-	fusion_model.cuda()
+	nest_model = nest_model.to(device)
+	fusion_model = fusion_model.to(device)
+	fusion_strategy = fusion_strategy.to(device)
 
 	return nest_model, fusion_model, fusion_strategy
 

@@ -2,11 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import kornia.utils as KU
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class SpatialTransformer(nn.Module):
     def __init__(self, h,w, gpu_use, mode='bilinear'):
         super(SpatialTransformer, self).__init__()
         grid = KU.create_meshgrid(h,w)
-        grid = grid.type(torch.FloatTensor).cuda() if gpu_use else grid.type(torch.FloatTensor)
+        grid = grid.type(torch.FloatTensor).to(device) if gpu_use else grid.type(torch.FloatTensor)
         self.register_buffer('grid', grid)
         self.mode = mode
 

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 import torch.nn.functional as F
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 '''
 class Transform(nn.Module):
     """
@@ -72,7 +72,7 @@ class SpatialTransformer(nn.Module):
         grids = torch.meshgrid(vectors)
         grid = torch.stack(grids) # torch.Size([2, 224, 224])
         grid = torch.unsqueeze(grid, 0)  # torch.Size([1, 2, 224, 224])
-        grid = grid.type(torch.FloatTensor).cuda()
+        grid = grid.type(torch.FloatTensor).to(device)
         self.register_buffer('grid', grid)
 
         self.mode = mode

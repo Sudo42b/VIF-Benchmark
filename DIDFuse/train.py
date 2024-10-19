@@ -65,7 +65,7 @@ dataloader_IR = torch.utils.data.DataLoader(Data_IR, batch_size,shuffle=False)
 # =============================================================================
 AE_Encoder=AE_Encoder()
 AE_Decoder=AE_Decoder()
-is_cuda = True
+is_cuda = torch.cuda.is_available()
 if is_cuda:
     AE_Encoder=AE_Encoder.cuda()
     AE_Decoder=AE_Decoder.cuda()

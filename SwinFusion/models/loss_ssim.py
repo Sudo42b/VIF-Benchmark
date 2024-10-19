@@ -48,7 +48,7 @@ def _ssim(img1, img2, window, window_size, channel, size_average=True):
 def Contrast(img1, img2, window_size=11, channel=1):
     window = create_window(window_size, channel)    
     if img1.is_cuda:
-        window = window.cuda(img1.get_device())
+        window = window.to(img1.get_device())
     window = window.type_as(img1)
     mu1 = F.conv2d(img1, window, padding=window_size//2, groups=channel)
     mu2 = F.conv2d(img2, window, padding=window_size//2, groups=channel)
@@ -78,7 +78,7 @@ class SSIMLoss(torch.nn.Module):
             window = create_window(self.window_size, channel)
 
             if img1.is_cuda:
-                window = window.cuda(img1.get_device())
+                window = window.to(img1.get_device())
             window = window.type_as(img1)
 
             self.window = window

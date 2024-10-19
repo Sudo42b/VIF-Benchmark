@@ -8,7 +8,7 @@ from kornia.filters import SpatialGradient
 from kornia.losses import SSIMLoss
 from kornia.metrics import AverageMeter
 from torch import nn, Tensor
-from torch.optim import RMSprop
+from torch.optim import rmsprop as RMSprop
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
@@ -19,7 +19,7 @@ from modules.generator import Generator
 from utils.environment_probe import EnvironmentProbe
 from utils.fusion_data import FusionData
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Train:
     """
     The train process for TarDAL.
@@ -52,8 +52,8 @@ class Train:
         # loss
         self.l1 = nn.L1Loss(reduction='none')
         self.ssim = SSIMLoss(window_size=11, reduction='none')
-        self.l1.cuda()
-        self.ssim.cuda()
+        self.l1.to(device)
+        self.ssim.to(device)
 
         # functions
         self.spatial = SpatialGradient('diff')

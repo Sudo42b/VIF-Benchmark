@@ -9,12 +9,13 @@ import kornia.filters as KF
 from copy import deepcopy
 import os
 from .irnn import irnn
-os.environ['CUDA_VISIBLE_DEVICES']='2'
+# os.environ['CUDA_VISIBLE_DEVICES']='2'
+deivce = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class SpatialTransformer(nn.Module):
     def __init__(self, h,w, gpu_use, mode='bilinear'):
         super(SpatialTransformer, self).__init__()
         grid = KU.create_meshgrid(h,w)
-        grid = grid.type(torch.FloatTensor).cuda() if gpu_use else grid.type(torch.FloatTensor)
+        grid = grid.type(torch.FloatTensor).to(device) if gpu_use else grid.type(torch.FloatTensor)
         self.register_buffer('grid', grid)
         self.mode = mode
 
@@ -48,7 +49,7 @@ class DispEstimator(nn.Module):
         estimator.append(Conv2d(oc,2,kernel_size=3,padding=1,dilation=1,act=None,norm=None))
         #estimator.append(nn.Tanh())
         self.layers = estimator
-        self.scale = torch.FloatTensor([256,256]).cuda().unsqueeze(-1).unsqueeze(-1).unsqueeze(0)-1
+        self.scale = torch.FloatTensor([256,256]).to(device).unsqueeze(-1).unsqueeze(-1).unsqueeze(0)-1
         #self.corrpropcessor = Conv2d(9+channel,channel,3,padding=1,bias=True,norm=nn.InstanceNorm2d)
         #self.AP3=nn.AvgPool2d(3,stride=1,padding=1)
 
@@ -167,9 +168,9 @@ class DenseMatcher(nn.Module):
         self.matcher1 = DispEstimator(base_oc*4,matcher_depth,dilation=4)
         self.matcher2 = DispEstimator(base_oc*8,matcher_depth,dilation=2)
         self.refiner = DispRefiner(base_oc*2,1)
-        self.grid_down = KU.create_meshgrid(64,64).cuda()
-        self.grid_full = KU.create_meshgrid(128,128).cuda()
-        self.scale = torch.FloatTensor([128,128]).cuda().unsqueeze(-1).unsqueeze(-1).unsqueeze(0)-1
+        self.grid_down = KU.create_meshgrid(64,64).to(device)
+        self.grid_full = KU.create_meshgrid(128,128).to(device)
+        self.scale = torch.FloatTensor([128,128]).to(device).unsqueeze(-1).unsqueeze(-1).unsqueeze(0)-1
 
     def match(self,feat11,feat12,feat21,feat22,feat31,feat32):
         #compute scale (w,h)
@@ -184,7 +185,7 @@ class DenseMatcher(nn.Module):
         #upsample disp and grid
         disp2 = F.interpolate(disp2_raw,[feat21.shape[2],feat21.shape[3]],mode='bilinear')
         if disp2.shape[2] != self.grid_down.shape[1] or disp2.shape[3] != self.grid_down.shape[2]:
-            self.grid_down = KU.create_meshgrid(feat21.shape[2],feat21.shape[3]).cuda()
+            self.grid_down = KU.create_meshgrid(feat21.shape[2],feat21.shape[3]).to(device)
 
         #warp the last src(fea1) to tgt(feat2) with disp2
         feat21 = F.grid_sample(feat21,self.grid_down+disp2.permute(0,2,3,1))
@@ -196,7 +197,7 @@ class DenseMatcher(nn.Module):
         disp1 = F.interpolate(disp1_raw,[feat11.shape[2],feat11.shape[3]],mode='bilinear')
         disp2 = F.interpolate(disp2,[feat11.shape[2],feat11.shape[3]],mode='bilinear')
         if disp1.shape[2] != self.grid_full.shape[1] or disp1.shape[3] != self.grid_full.shape[2]:
-            self.grid_full = KU.create_meshgrid(feat11.shape[2],feat11.shape[3]).cuda()
+            self.grid_full = KU.create_meshgrid(feat11.shape[2],feat11.shape[3]).to(device)
 
         #warp
         feat11 = F.grid_sample(feat11,self.grid_full+(disp1+disp2).permute(0,2,3,1))
@@ -386,7 +387,7 @@ def gaussian_weights_init(m):
 
 
 if __name__ == '__main__':
-    matcher = DenseMatcher().cuda()
-    ir = torch.rand(2,3,512,512).cuda()
-    vis = torch.rand(2,3,512,512).cuda()
+    matcher = DenseMatcher().to(device)
+    ir = torch.rand(2,3,512,512).to(device)
+    vis = torch.rand(2,3,512,512).to(device)
     disp=matcher(ir,vis,'bi')

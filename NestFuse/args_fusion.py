@@ -1,4 +1,4 @@
-
+import torch
 class args():
 	# training args
 	epochs = 2  #"number of training epochs, default is 2"
@@ -12,7 +12,7 @@ class args():
 	save_model_dir_autoencoder = "models/nestfuse_autoencoder"
 	save_loss_dir = './models/loss_autoencoder/'
 
-	cuda = 1
+	cuda = True if torch.cuda.is_available() else False  #"use cuda for training, default is True"
 	ssim_weight = [1,10,100,1000,10000]
 	ssim_path = ['1e0', '1e1', '1e2', '1e3', '1e4']
 

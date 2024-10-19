@@ -219,7 +219,8 @@ class Fusion_Nuclear(torch.nn.Module):
 # sum of S V for each chanel
 def nuclear_pooling(tensor):
     shape = tensor.size()
-    vectors = torch.zeros(1, shape[1], 1, 1).cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    vectors = torch.zeros(1, shape[1], 1, 1).to(device)
     for i in range(shape[1]):
         u, s, v = torch.svd(tensor[0, i, :, :] + EPSILON)
         s_sum = torch.sum(s)

@@ -6,6 +6,17 @@ from torch.utils.data.dataset import Dataset
 from PIL import Image
 import glob
 from natsort import natsorted
+
+def prepare_data_path(dataset_path):
+    filenames = os.listdir(dataset_path)
+    data_dir = dataset_path
+    data = glob.glob(os.path.join(data_dir, "*.bmp"))
+    data.extend(glob.glob(os.path.join(data_dir, "*.tif")))
+    data.extend(glob.glob((os.path.join(data_dir, "*.jpg"))))
+    data.extend(glob.glob((os.path.join(data_dir, "*.png"))))
+    data.sort()
+    filenames.sort()
+    return data, filenames
 class Fusion_dataset(Dataset):
     def __init__(self, split, ir_path=None, vi_path=None):
         super(Fusion_dataset, self).__init__()

@@ -15,7 +15,7 @@ import torch
 from dataloader.fuse_data_vsm import FuseTestData
 from models.fusion_net import FusionNet
 import argparse
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def main(Method='UMF-CMGR', model_path='', ir_dir='', vi_dir='', save_dir='', is_RGB=True):  
     cuda = True
     if cuda and torch.cuda.is_available():
@@ -38,8 +38,8 @@ def main(Method='UMF-CMGR', model_path='', ir_dir='', vi_dir='', save_dir='', is
     test_bar = tqdm(test_data_loader)
     for (ir, vi), (ir_path, vi_path) in test_bar:
         file_name = os.path.basename(ir_path[0])
-        ir = ir.cuda()
-        vi = vi.cuda()
+        ir = ir.to(device)
+        vi = vi.to(device)
         start = time.time()
         with torch.no_grad():
             fuse_out  = net(ir, vi)

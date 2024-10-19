@@ -5,19 +5,19 @@ from model import SuperFusion
 from dataset import TestData, imsave
 from time import time
 from tqdm import tqdm
-os.environ['CUDA_VISIBLE_DEVICES']='0'
-
+# os.environ['CUDA_VISIBLE_DEVICES']='0'
+device = torch.device("cuda:{}".format(0) if torch.cuda.is_available() else "cpu")
 def main(Method = 'SuperFusion', model_path='', ir_dir='', vi_dir='', save_dir='', is_RGB=True):  
     os.makedirs(save_dir, exist_ok=True)
     model = SuperFusion()
     model.resume(model_path)
-    model = model.cuda()
+    model = model.to(device)
     model.eval()
     test_dataloader = TestData(ir_dir, vi_dir)
     p_bar = tqdm(enumerate(test_dataloader), total=len(test_dataloader))
     for idx, [ir, vi, name] in p_bar:
-        vi_tensor = vi.cuda()
-        ir_tenor = ir.cuda()
+        vi_tensor = vi.to(device)
+        ir_tenor = ir.to(device)
         start = time()
         with torch.no_grad():
             results = model.fusion_forward(ir_tenor, vi_tensor)

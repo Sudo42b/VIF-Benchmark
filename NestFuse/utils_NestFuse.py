@@ -157,7 +157,8 @@ def recons_fusion_images(img_lists, h, w):
     img_f_list = []
     h_cen = int(np.floor(h / 2))
     w_cen = int(np.floor(w / 2))
-    ones_temp = torch.ones(1, 1, h, w).cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    ones_temp = torch.ones(1, 1, h, w).to(device)
     for i in range(len(img_lists[0])):
         # img1, img2, img3, img4
         img1 = img_lists[0][i]
@@ -169,9 +170,9 @@ def recons_fusion_images(img_lists, h, w):
         # save_image_test(img2, './outputs/test/block2.png')
         # save_image_test(img3, './outputs/test/block3.png')
         # save_image_test(img4, './outputs/test/block4.png')
-
-        img_f = torch.zeros(1, 1, h, w).cuda()
-        count = torch.zeros(1, 1, h, w).cuda()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        img_f = torch.zeros(1, 1, h, w).to(device)
+        count = torch.zeros(1, 1, h, w).to(device)
 
         img_f[:, :, 0:h_cen + 3, 0: w_cen + 3] += img1
         count[:, :, 0:h_cen + 3, 0: w_cen + 3] += ones_temp[:, :, 0:h_cen + 3, 0: w_cen + 3]

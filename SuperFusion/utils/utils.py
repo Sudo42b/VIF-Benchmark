@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from PIL import Image
 import torchvision.transforms.functional as TF
 from time import time
+deivce = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def randflow(img,angle=7,trans=0.07,ratio=1,sigma=15,base=500):
     h,w=img.shape[2],img.shape[3]
     # affine
@@ -76,7 +77,7 @@ scale = (torch.FloatTensor([w,h]).unsqueeze(0).unsqueeze(0).unsqueeze(0)-1)/(cro
 disp_crop = disp[:,h//2-crop_size+shift:h//2+crop_size+shift,w//2-crop_size+shift:w//2+crop_size+shift,:]*scale
 img_crop = img[:,:,h//2-crop_size+shift:h//2+crop_size+shift,w//2-crop_size+shift:w//2+crop_size+shift]
 flow_crop = KU.create_meshgrid(crop_size*2,crop_size*2).to(img.device)+disp_crop
-img_warped1 = F.grid_sample(img_crop,flow_crop)#trans(img_crop.cuda(),disp_crop.cuda())
+img_warped1 = F.grid_sample(img_crop,flow_crop)#trans(img_crop.to(device),disp_crop.to(device))
 #img_rewarped = F.grid_sample(img_warped,Invertdisp(disp,flow)[1],mode='bilinear',align_corners=False)
 """
 # 

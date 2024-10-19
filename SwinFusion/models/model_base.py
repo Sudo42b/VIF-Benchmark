@@ -183,7 +183,9 @@ class ModelBase():
     # load the state_dict of the optimizer
     # ----------------------------------------
     def load_optimizer(self, load_path, optimizer):
-        optimizer.load_state_dict(torch.load(load_path, map_location=lambda storage, loc: storage.cuda(torch.cuda.current_device())))
+        device = self.device
+        optimizer.load_state_dict(torch.load(load_path)).to(device)
+        
 
     def update_E(self, decay=0.999):
         netG = self.get_bare_model(self.netG)

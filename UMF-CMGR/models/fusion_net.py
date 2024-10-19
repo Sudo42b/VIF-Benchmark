@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import numpy as np
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class make_dense(nn.Module):
   def __init__(self, nChannels, growthRate, kernel_size=3):
@@ -126,15 +127,15 @@ def params_count(model):
 
 if __name__ == '__main__':
 
-    model = FusionNet(64).cuda()
-    a = torch.randn(1, 1, 64, 64).cuda()
+    model = FusionNet(64).to(device)
+    a = torch.randn(1, 1, 64, 64).to(device)
     b = model(a,a)
     print(b.shape)
-    model =FusionNet(64).cuda()
+    model =FusionNet(64).to(device)
     model.eval()
     print("Params(M): %.2f" % (params_count(model) / (1000 ** 2)))
     import time
-    x = torch.Tensor(1, 1, 64, 64).cuda()
+    x = torch.Tensor(1, 1, 64, 64).to(device)
 
     N = 10
     with torch.no_grad():

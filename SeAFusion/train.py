@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 from torch.autograd import Variable
 from FusionNet import FusionNet
-from TaskFusion_dataset import Fusion_dataset
+from datasets import Fusion_dataset
 import argparse
 import datetime
 import time
@@ -20,7 +20,7 @@ import torch
 from torch.utils.data import DataLoader
 import warnings
 warnings.filterwarnings('ignore')
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def parse_args():
     parse = argparse.ArgumentParser()
     return parse.parse_args()
@@ -37,7 +37,7 @@ def RGB2YCrCb(input_im):
     Y = torch.unsqueeze(Y, 1)
     Cr = torch.unsqueeze(Cr, 1)
     Cb = torch.unsqueeze(Cb, 1)
-    temp = torch.cat((Y, Cr, Cb), dim=1).cuda()
+    temp = torch.cat((Y, Cr, Cb), dim=1).to(device)
     out = (
         temp.reshape(
             list(input_im.size())[0],
@@ -54,9 +54,9 @@ def YCrCb2RGB(input_im):
     im_flat = input_im.transpose(1, 3).transpose(1, 2).reshape(-1, 3)
     mat = torch.tensor(
         [[1.0, 1.0, 1.0], [1.403, -0.714, 0.0], [0.0, -0.344, 1.773]]
-    ).cuda()
-    bias = torch.tensor([0.0 / 255, -0.5, -0.5]).cuda()
-    temp = (im_flat + bias).mm(mat).cuda()
+    ).to(device)
+    bias = torch.tensor([0.0 / 255, -0.5, -0.5]).to(device)
+    temp = (im_flat + bias).mm(mat).to(device)
     out = (
         temp.reshape(
             list(input_im.size())[0],
@@ -99,7 +99,7 @@ def train_seg(i=0, logger=None):
     net = BiSeNet(n_classes=n_classes)
     if i>0:
         net.load_state_dict(torch.load(load_path))
-    net.cuda()
+    net.to(device)
     net.train()
     print('Load Pre-trained Segmentation Model:{}!'.format(load_path))
     score_thres = 0.7
@@ -147,8 +147,8 @@ def train_seg(i=0, logger=None):
             # sampler.set_epoch(epoch)
             diter = iter(dl)
             im, lb, _ = next(diter)
-        im = im.cuda()
-        lb = lb.cuda()
+        im = im.to(device)
+        lb = lb.to(device)
         lb = torch.squeeze(lb, 1)
 
         optim.zero_grad()
@@ -201,7 +201,7 @@ def train_fusion(num=0, logger=None):
     Method = 'Fusion'
     modelpth = os.path.join(modelpth, Method)
     fusionmodel = eval('FusionNet')(output=1)
-    fusionmodel.cuda()
+    fusionmodel.to(device)
     fusionmodel.train()
     optimizer = torch.optim.Adam(fusionmodel.parameters(), lr=lr_start)
     if num>0:
@@ -212,7 +212,7 @@ def train_fusion(num=0, logger=None):
             logger = logging.getLogger()
             setup_logger(modelpth)
         segmodel.load_state_dict(torch.load(save_pth))
-        segmodel.cuda()
+        segmodel.to(device)
         segmodel.eval()
         for p in segmodel.parameters():
             p.requires_grad = False
@@ -252,10 +252,10 @@ def train_fusion(num=0, logger=None):
             param_group['lr'] = lr_this_epo
         for it, (image_vis, image_ir, label, name) in enumerate(train_loader):
             fusionmodel.train()
-            image_vis = Variable(image_vis).cuda()
+            image_vis = Variable(image_vis).to(device)
             image_vis_ycrcb = RGB2YCrCb(image_vis)
-            image_ir = Variable(image_ir).cuda()
-            label = Variable(label).cuda()
+            image_ir = Variable(image_ir).to(device)
+            label = Variable(label).to(device)
             logits = fusionmodel(image_vis_ycrcb, image_ir)
             fusion_ycrcb = torch.cat(
                 (logits, image_vis_ycrcb[:, 1:2, :, :],
@@ -331,8 +331,8 @@ def run_fusion(type='train'):
     os.makedirs(fused_dir, mode=0o777, exist_ok=True)
     fusionmodel = eval('FusionNet')(output=1)
     fusionmodel.eval()
-    if args.gpu >= 0:
-        fusionmodel.cuda(args.gpu)
+    
+    fusionmodel.to(device)
     fusionmodel.load_state_dict(torch.load(fusion_model_path))
     print('done!')
     test_dataset = Fusion_dataset(type)
@@ -350,10 +350,10 @@ def run_fusion(type='train'):
             images_vis = Variable(images_vis)
             images_ir = Variable(images_ir)
             labels = Variable(labels)
-            if args.gpu >= 0:
-                images_vis = images_vis.cuda(args.gpu)
-                images_ir = images_ir.cuda(args.gpu)
-                labels = labels.cuda(args.gpu)
+            
+            images_vis = images_vis.to(device)
+            images_ir = images_ir.to(device)
+            labels = labels.to(device)
             images_vis_ycrcb = RGB2YCrCb(images_vis)
             logits = fusionmodel(images_vis_ycrcb, images_ir)
             fusion_ycrcb = torch.cat(

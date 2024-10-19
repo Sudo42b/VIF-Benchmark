@@ -12,7 +12,7 @@ import random
 import torch
 from torch.optim import Adam
 from torch.autograd import Variable
-import utils
+import utils_RFN_Nest as utils
 from net import NestFuse_light2_nodense, Fusion_network
 from args_fusion import args
 import pytorch_msssim
@@ -204,7 +204,8 @@ def train(original_imgs_path, img_flag, alpha, w1, w2):
 				scio.savemat(loss_filename_path, {'loss_all': loss_data})
 
 				fusion_model.train()
-				fusion_model.cuda()
+				if args.cuda:
+					fusion_model.cuda()
 				tbar.set_description("\nCheckpoint, trained model saved at", save_model_path)
 
 		# ssim loss
