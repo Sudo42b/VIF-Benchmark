@@ -131,3 +131,6 @@ dmypy.json
 .vscode/
 Checkpoint/DIVFusion/vgg16.npy
 Checkpoint/DIVFusion/decom.ckpt.meta
+*.pyc
+Dataset/
+*.jpg

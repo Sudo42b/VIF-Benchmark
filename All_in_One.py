@@ -5,8 +5,8 @@ import argparse
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument('--path', type=str, default='Dataset')
-argparser.add_argument('--save', type=str, default='Results')
+argparser.add_argument('--path', type=str, default=os.path.join(os.getcwd(), 'Dataset'))
+argparser.add_argument('--save', type=str, default=os.path.join(os.getcwd(), 'Results'))
 
 args = argparser.parse_args()
 save_dir = os.path.join(args.save)
@@ -83,7 +83,7 @@ print(len(Method_list))
 two_model_list =['CSF', 'CUFD', 'DIDFuse', 'DIVFusion', 'RFN-Nest'] 
 
 for Method in tqdm(Method_list):
-    save_dir = os.path.join(save_dir, Method)
+    save_dir_method = os.path.join(save_dir, Method)
     if Method not in two_model_list:
         with open('script.sh', 'w') as f:
             f.write('#!/bin/bash\n')
@@ -95,7 +95,7 @@ for Method in tqdm(Method_list):
                     --model_path {model_path_dict[Method]} \
                     --ir_dir {ir_dir}\
                     --vi_dir {vi_dir} \
-                    --save_dir {save_dir} \
+                    --save_dir {save_dir_method} \
                     --is_RGB {True}\n")
             f.write("cd ..\n".format(Method))
         os.system('bash script.sh')
@@ -112,7 +112,7 @@ for Method in tqdm(Method_list):
                     --model_path_2 {model_path_dict_2[Method]} \
                     --ir_dir {ir_dir}\
                     --vi_dir {vi_dir} \
-                    --save_dir {save_dir} \
+                    --save_dir {save_dir_method} \
                     --is_RGB {True}\n")
             f.write("cd ..\n".format(Method))
         os.system('bash script.sh')
