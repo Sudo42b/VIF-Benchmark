@@ -4,7 +4,7 @@ import time
 import h5py
 import numpy as np
 from train import train
-from generate import generate
+from generate_GAN_FM import generate
 import os 
 import glob
 

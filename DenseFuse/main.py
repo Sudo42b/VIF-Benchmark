@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import time
 
-# from train_recons import train_recons
+from train_recons import train_recons
 from generate import generate
 from utils import list_images
 import os
